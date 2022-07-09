@@ -5,6 +5,9 @@ const myFace = document.getElementById("myFace");
 const muteBtn = document.getElementById("mute");
 const cameraBtn = document.getElementById("camera");
 const camerasSelect = document.getElementById("cameras");
+const h2MyHP = document.getElementById("myHP");
+// const h2PeerHP = document.getElementById("peerHP");
+
 
 call.hidden = true;
 
@@ -42,6 +45,8 @@ async function getMedia(deviceId) {
       video: deviceId ? { deviceId } : true,
     });
     console.log(myStream);
+    faceapi.nets.tinyFaceDetector.loadFromUri('/public/models')
+    faceapi.nets.faceExpressionNet.loadFromUri('/public/models')
     myFace.srcObject = myStream;
     if (!deviceId) {
       getCameras();
@@ -238,3 +243,35 @@ function handleAddStream(data, othersId) {
   video.height = 400;
   video.srcObject = data.stream;
 }
+
+let HP = 100
+
+myFace.addEventListener('play', () => { // 이 함수는 한 번만 실행
+    const canvas = faceapi.createCanvasFromMedia(myFace)
+    document.body.append(canvas)
+    const displaySize = { width: myFace.width, height: myFace.height }
+    faceapi.matchDimensions(canvas, displaySize)
+    setInterval(async () => { // 이 함수는 N[ms]마다 실행
+      const detections = await faceapi.detectAllFaces(myFace, new faceapi.TinyFaceDetectorOptions()).withFaceExpressions() // 모든 얼굴 감지 -> detectSingleFace 사용 고려해보기
+      // const resizedDetections = faceapi.resizeResults(detections, displaySize)
+      // canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height) // 그렸던 내용을 지워준다고 함.
+      // faceapi.draw.drawDetections(canvas, resizedDetections)
+      // faceapi.draw.drawFaceExpressions(canvas, resizedDetections)
+      if (detections[0] && HP > 0) {
+        let happiness = detections[0].expressions.happy
+        socket.emit("smile", HP, room);
+        if (happiness > 0.6) { // 민감도로 하드모드, 이지모드 설정도 가능할듯
+          HP -= 1;
+        } else if (happiness > 0.2) {
+          HP -= 0.5;
+        }
+      }
+      if (HP > 0) {
+        console.log("HP :", HP);
+        h2MyHP.innerText = `My HP : ${HP}`;
+      } else {
+        console.log("Game Over!!");
+        h2MyHP.innerText = `Game Over!!`;
+      }
+    }, 100) // 마지막 인자로 얼굴 인식 주기 설정(ms)
+  })

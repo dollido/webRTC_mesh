@@ -61,6 +61,9 @@ wsServer.on("connection", socket => {
     socket.on("ice", (ice, room, othersId, myId) => {
         socket.to(othersId).emit("ice", ice, myId);
     });
+    socket.on("smile", (peerHp, room, peerId) => { // 웃은 사람의 hp 업데이트
+        socket.to(room).emit("smile", peerHp, peerId);
+    })
 })
 
 /** open server */

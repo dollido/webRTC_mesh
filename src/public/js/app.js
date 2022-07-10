@@ -5,6 +5,8 @@ const myFace = document.getElementById("myFace");
 const muteBtn = document.getElementById("mute");
 const cameraBtn = document.getElementById("camera");
 const camerasSelect = document.getElementById("cameras");
+const h2MyHP = document.getElementById("myHP");
+
 
 call.hidden = true;
 
@@ -14,6 +16,8 @@ call.hidden = true;
 let myStream;
 let muted = false;
 let cameraOff = false;
+let peerDict = {};  // 자신과 연결된 상대의 socket.id에 대한 hp Element 저장
+let myHP = 100
 
 async function getCameras() {
   try {
@@ -42,6 +46,8 @@ async function getMedia(deviceId) {
       video: deviceId ? { deviceId } : true,
     });
     console.log(myStream);
+    faceapi.nets.tinyFaceDetector.loadFromUri('/public/models')
+    faceapi.nets.faceExpressionNet.loadFromUri('/public/models')
     myFace.srcObject = myStream;
     if (!deviceId) {
       getCameras();
@@ -154,6 +160,10 @@ socket.on("ice", (ice, othersId) => {
   /** 다른 사람에게서 받은 ice candidate를 각 커넥션에 넣는다. */
   peerConnections[othersId].addIceCandidate(ice);
 });
+socket.on("smile", (peerHp, peerId) => {
+  const h2 = peerDict[peerId];
+  h2.innerText = `HP : ${peerHp}`;
+})
 
 // RTC Code
 async function makeConnection(othersId, _offer) {
@@ -228,8 +238,12 @@ function handleIce(data, othersId) {
 function handleAddStream(data, othersId) {
   console.log("got an stream from my peer");
   // stream을 받아오면, 비디오를 새로 생성하고 넣어준다.
+  const h2 = document.createElement("h2");
   const video = document.createElement("video");
+  document.getElementById("othersStream").appendChild(h2);
   document.getElementById("othersStream").appendChild(video);
+  h2.innerText = "Now Loading..."
+  peerDict[othersId] = h2;
   video.id = othersId;
   video.autoplay = true;
   video.playsInline = true;
@@ -238,3 +252,43 @@ function handleAddStream(data, othersId) {
   video.height = 400;
   video.srcObject = data.stream;
 }
+
+
+function handleHP(happiness) {
+  if (myHP > 0) { // 아직 살아 있으면
+    if (happiness > 0.2) { // 피를 깎아야 하는 경우
+      if (happiness > 0.6) {
+        myHP -= 1;
+      } else {
+        myHP -= 0.5;
+      }
+    }
+    console.log("HP :", myHP);
+    h2MyHP.innerText = `My HP : ${myHP}`;
+    socket.emit("smile", myHP, room, socket.id);
+  } else { // 죽었으면
+    console.log("Game Over!!");
+    h2MyHP.innerText = `Game Over!!`;
+    socket.emit("gameOver", socket.id);
+  }
+}
+
+
+myFace.addEventListener('play', () => { // 이 함수는 한 번만 실행
+    const canvas = faceapi.createCanvasFromMedia(myFace)
+    document.body.append(canvas)
+    const displaySize = { width: myFace.width, height: myFace.height }
+    faceapi.matchDimensions(canvas, displaySize)
+    setInterval(async () => { // 이 함수는 N[ms]마다 실행
+      const detections = await faceapi.detectAllFaces(myFace, new faceapi.TinyFaceDetectorOptions()).withFaceExpressions() // 모든 얼굴 감지 -> detectSingleFace 사용 고려해보기
+      // const resizedDetections = faceapi.resizeResults(detections, displaySize)
+      // canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height) // 그렸던 내용을 지워준다고 함.
+      // faceapi.draw.drawDetections(canvas, resizedDetections)
+      // faceapi.draw.drawFaceExpressions(canvas, resizedDetections)
+      
+      if (detections[0]) { // 얼굴이 감지된 경우에만
+        handleHP(detections[0].expressions.happy);
+      }
+
+    }, 1000) // 마지막 인자로 얼굴 인식 주기 설정(ms)
+  })

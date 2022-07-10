@@ -5,6 +5,7 @@ html(lang="ko")
         meta(name="viewport", content="viewport-fit=cover, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no")
         title Noom
         link(rel="stylesheet" href="https://unpkg.com/mvp.css")
+        script(src="/public/js/face-api.min.js") 
     body 
         header
             h1 Noom
@@ -16,6 +17,7 @@ html(lang="ko")
             div#call
                 div#myStream
                     h2 local
+                    h2#myHP AI Model Loading...
                     video#myFace(autoplay, playinline, width="400", height="400", style="background-color: gray;")
                     button#mute Mute
                     button#camera Turn Camera Off

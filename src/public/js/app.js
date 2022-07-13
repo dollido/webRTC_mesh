@@ -2,11 +2,11 @@ const socket = io();
 
 const call = document.getElementById("call");
 const myFace = document.getElementById("myFace");
-const muteBtn = document.getElementById("mute");
-const cameraBtn = document.getElementById("camera");
-const camerasSelect = document.getElementById("cameras");
+// const muteBtn = document.getElementById("mute");
+// const cameraBtn = document.getElementById("camera");
+// const camerasSelect = document.getElementById("cameras");
 const h2MyHP = document.getElementById("myHP");
-
+let numOfStreams = 0;
 
 call.hidden = true;
 
@@ -32,7 +32,7 @@ async function getCameras() {
       option.value = camera.deviceId;
       option.innerText = camera.label;
       if (currentCamera.label === camera.label) cameras.value = camera.deviceId;
-      camerasSelect.append(option);
+      // camerasSelect.append(option);
     });
   } catch (e) {
     console.log(e);
@@ -52,42 +52,42 @@ async function getMedia(deviceId) {
     if (!deviceId) {
       getCameras();
     }
-    setMute(true);
+    // setMute(true);
   } catch (e) {
     alert(e);
     console.log(e);
   }
 }
 
-function setMute(mute) {
-  const audioTracks = myStream.getAudioTracks();
-  console.log(audioTracks);
-  if (mute) {
-    muteBtn.innerText = "UnMute";
-    muted = true;
-    audioTracks.forEach((track) => (track.enabled = false));
-  } else {
-    muteBtn.innerText = "Mute";
-    muted = false;
-    audioTracks.forEach((track) => (track.enabled = true));
-  }
-}
-function handleMuteClick() {
-  setMute(!muted);
-}
-function handleMuteCameraClick() {
-  const cameraTracks = myStream.getVideoTracks();
-  console.log(cameraTracks);
-  if (cameraOff) {
-    cameraBtn.innerText = "Turn Camera Off";
-    cameraOff = false;
-    cameraTracks.forEach((track) => (track.enabled = true));
-  } else {
-    cameraBtn.innerText = "Turn Camera On";
-    cameraOff = true;
-    cameraTracks.forEach((track) => (track.enabled = false));
-  }
-}
+// function setMute(mute) {
+//   const audioTracks = myStream.getAudioTracks();
+//   console.log(audioTracks);
+//   if (mute) {
+//     muteBtn.innerText = "UnMute";
+//     muted = true;
+//     audioTracks.forEach((track) => (track.enabled = false));
+//   } else {
+//     muteBtn.innerText = "Mute";
+//     muted = false;
+//     audioTracks.forEach((track) => (track.enabled = true));
+//   }
+// }
+// function handleMuteClick() {
+//   setMute(!muted);
+// }
+// function handleMuteCameraClick() {
+//   const cameraTracks = myStream.getVideoTracks();
+//   console.log(cameraTracks);
+//   if (cameraOff) {
+//     cameraBtn.innerText = "Turn Camera Off";
+//     cameraOff = false;
+//     cameraTracks.forEach((track) => (track.enabled = true));
+//   } else {
+//     cameraBtn.innerText = "Turn Camera On";
+//     cameraOff = true;
+//     cameraTracks.forEach((track) => (track.enabled = false));
+//   }
+// }
 async function handleCameraChange() {
   await getMedia(cameras.value);
   if (myPeerConnection) {
@@ -98,9 +98,9 @@ async function handleCameraChange() {
     videoSender.replaceTrack(videoTrack);
   }
 }
-muteBtn.addEventListener("click", handleMuteClick);
-cameraBtn.addEventListener("click", handleMuteCameraClick);
-camerasSelect.addEventListener("input", handleCameraChange);
+// muteBtn.addEventListener("click", handleMuteClick);
+// cameraBtn.addEventListener("click", handleMuteCameraClick);
+// camerasSelect.addEventListener("input", handleCameraChange);
 
 const welcome = document.getElementById("welcome");
 const welcomeForm = welcome.querySelector("form");
@@ -236,12 +236,18 @@ function handleIce(data, othersId) {
  * @param {MediaStreamEvent} data
  */
 function handleAddStream(data, othersId) {
+  numOfStreams += 1;
   console.log("got an stream from my peer");
   // stream을 받아오면, 비디오를 새로 생성하고 넣어준다.
   const h2 = document.createElement("h2");
   const video = document.createElement("video");
-  document.getElementById("othersStream").appendChild(h2);
-  document.getElementById("othersStream").appendChild(video);
+  if (numOfStreams%2){
+    document.getElementById("othersStream").appendChild(h2);
+    document.getElementById("othersStream").appendChild(video);
+  } else {
+    document.getElementById("myStream").appendChild(h2);
+    document.getElementById("myStream").appendChild(video);
+  }
   h2.innerText = "Now Loading..."
   peerDict[othersId] = h2;
   video.id = othersId;
@@ -275,10 +281,10 @@ function handleHP(happiness) {
 
 
 myFace.addEventListener('play', () => { // 이 함수는 한 번만 실행
-    const canvas = faceapi.createCanvasFromMedia(myFace)
-    document.body.append(canvas)
-    const displaySize = { width: myFace.width, height: myFace.height }
-    faceapi.matchDimensions(canvas, displaySize)
+    // const canvas = faceapi.createCanvasFromMedia(myFace)
+    // document.body.append(canvas)
+    // const displaySize = { width: myFace.width, height: myFace.height }
+    // faceapi.matchDimensions(canvas, displaySize)
     setInterval(async () => { // 이 함수는 N[ms]마다 실행
       const detections = await faceapi.detectAllFaces(myFace, new faceapi.TinyFaceDetectorOptions()).withFaceExpressions() // 모든 얼굴 감지 -> detectSingleFace 사용 고려해보기
       // const resizedDetections = faceapi.resizeResults(detections, displaySize)

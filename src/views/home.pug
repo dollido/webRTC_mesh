@@ -15,14 +15,14 @@ html(lang="ko")
                     input(placeholder="room name", required, type="text") 
                     button Enter room
             div#call
-                div#myStream
+                div#myStream(style="float : left; width : 50%;") 
                     h2 local
                     h2#myHP AI Model Loading...
                     video#myFace(autoplay, playinline, width="400", height="400", style="background-color: gray;")
-                    button#mute Mute
-                    button#camera Turn Camera Off
-                    select#cameras
-                div#othersStream
+                    //- button#mute Mute
+                    //- button#camera Turn Camera Off
+                    //- select#cameras
+                div#othersStream(style="float : left; width : 50%;")
                     h2 remote
         script(src="/socket.io/socket.io.js")
         script(src="/public/js/app.js")
